@@ -39,6 +39,7 @@ public class udp_server : MonoBehaviour
         clientEnd = (EndPoint)sender;
         print("waiting for UDP dgram");
         targetCamera = transform;
+        // Debug.Log(targetCamera);
 
         //thread for hearing from client
         receiveThread = new Thread(new ThreadStart(SocketReceive));

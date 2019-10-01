@@ -11,8 +11,12 @@ from math import sin, cos, pi
 import threading
 import time
 import socket
+import sys
 
 import csv
+
+HEADERS = ['Elapsed Time', 'x', 'y', 'z', 'rotation1', 'roatation2', 'roatation3']
+CONSOLE_OUTPUT_FORMAT = '\rBuffer: {0:6} {1:6} {2:6} {3:6} {4:6} {5:6} Data: {6:6} {7:6} {8:6} {9:6} {10:6} {11:6}'
 
 def update(t, input, point, lines):
     o = input.data[0:3]
@@ -41,14 +45,22 @@ class dataThread(threading.Thread):
         self.data = [.0, .0, .0, .0, .0, .0]
 
     def run(self):
-        while True:
-            buffer, addr = self.sock.recvfrom(2048)
-            buffer = buffer.split(',')
-
-            ts = buffer[0]
-            print buffer
-            self.data = [float(x) for x in buffer[1:4]] + [float(x)*pi/180.0 for x in buffer[4:7]]
-            print self.data
+        with open('logfile.csv', 'w') as csvfile:
+            csvfile.writelines([','.join(HEADERS) + '\n'])
+            start_time = time.time()
+            while True:
+                buffer, addr = self.sock.recvfrom(2048)
+                elapsed_time = time.time() - start_time
+                buffer = buffer.split(',')
+                ts = buffer[0]
+                # print buffer
+                self.data = [float(x) for x in buffer[1:4]] + [float(x)*pi/180.0 for x in buffer[4:7]]
+                data_as_strings_with_time = [str(elapsed_time)] + [str(d) for d in self.data]
+                csvfile.writelines([','.join(data_as_strings_with_time) + '\n'])
+                # print self.data
+                buffer_then_data = buffer + self.data
+                sys.stdout.write(CONSOLE_OUTPUT_FORMAT.format(*buffer_then_data))
+                sys.stdout.flush()
 
 
 if __name__ == '__main__':
